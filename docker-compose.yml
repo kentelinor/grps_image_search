@@ -5,10 +5,11 @@ services:
     build:
       context: .                    # Project root
       dockerfile: server/Dockerfile  # Path to server Dockerfile
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SEARCH_ENGINE_ID=${SEARCH_ENGINE_ID}
     ports:
       - "50051:50051"
-    depends_on:
-      - redis
     networks:
       - grpc-network
 
@@ -23,12 +24,7 @@ services:
     networks:
       - grpc-network
 
-  redis:
-    image: "redis:latest"
-    ports:
-      - "6379:6379"
-    networks:
-      - grpc-network
+
     
   proxy:
     build:

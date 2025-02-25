@@ -1,6 +1,8 @@
 .App {
   text-align: center;
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 input[type="text"] {
@@ -16,11 +18,38 @@ button {
   cursor: pointer;
 }
 
-img {
+.images-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
   margin-top: 20px;
-  max-width: 600px;
+}
+
+.images-container img {
+  width: calc(33.33% - 30px); /* 3 images per row with margin */
+  max-width: 300px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  object-fit: cover;
+  height: auto;
+  transition: transform 0.3s;
+}
+
+.images-container img:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 900px) {
+  .images-container img {
+    width: calc(50% - 30px); /* 2 images per row on medium screens */
+  }
+}
+
+@media (max-width: 600px) {
+  .images-container img {
+    width: 100%; /* 1 image per row on small screens */
+  }
 }
 
 .error {

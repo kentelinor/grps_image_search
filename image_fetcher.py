@@ -1,77 +1,74 @@
-import requests
 import logging
-import json
-import re
-import urllib.parse
-import random
+import requests
+import os
 
-DUCKDUCKGO_IMAGE_SEARCH_URL = "https://duckduckgo.com"
-DUCKDUCKGO_IMAGE_API_URL = "https://duckduckgo.com/i.js"
+# Google Custom Search JSON API Configuration
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+SEARCH_ENGINE_ID = os.getenv('SEARCH_ENGINE_ID')
 
-# List of rotating user-agents to mimic real browsers
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:110.0) Gecko/20100101 Firefox/110.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
-]
+def is_valid_image_url(url, min_width=100):
+    """
+    Checks if the image URL is valid and publicly accessible.
+    Filters out SVGs, decorative images, and thumbnails smaller than min_width.
+    """
+    # Filter out SVGs and other non-suitable images
+    if (url.endswith(".svg") or                 
+        "placeholder" in url):                
+        logging.warning(f"Filtered out non-content image: {url}")
+        return False
+
+    # Check if the URL is publicly accessible
+    try:
+        response = requests.head(url, allow_redirects=True)
+        if response.status_code == 200:
+            logging.info(f"Image URL is publicly accessible: {url}")
+            return True
+        else:
+            logging.warning(f"Image URL returned non-200 status: {url}")
+            return False
+    except Exception as e:
+        logging.error(f"Error checking image URL: {url}, Exception: {e}")
+        return False
 
 def fetch_image_url(description):
     """
-    Fetches an image URL based on the description using DuckDuckGo's public image search.
+    Fetches an image URL based on the description using Google Custom Search JSON API.
     """
-    headers = {
-        "User-Agent": random.choice(USER_AGENTS),  # Rotate User-Agent
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Referer": "https://duckduckgo.com/",
-        "DNT": "1",  # Do Not Track
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-User": "?1"
-    }
-
     try:
-        # Get the vqd token required for the image search
-        logging.info(f"Searching DuckDuckGo for: {description}")
-        init_response = requests.get(f"{DUCKDUCKGO_IMAGE_SEARCH_URL}/?q={urllib.parse.quote(description)}&iax=images&ia=images", headers=headers)
-        init_response.raise_for_status()
-
-        # Extract the vqd token from the HTML source using regex
-        token_match = re.search(r'vqd=([\d-]+)&', init_response.text)
-        if not token_match:
-            logging.error("Failed to extract token for DuckDuckGo image search.")
-            return None
-        
-        vqd_token = token_match.group(1)
-        logging.info(f"Extracted token: {vqd_token}")
-
-        # Use the token to perform the image search
+        # Prepare API request
+        search_url = 'https://www.googleapis.com/customsearch/v1'
         params = {
-            "q": description,
-            "iax": "images",
-            "ia": "images",
-            "vqd": vqd_token,
-            "o": "json"
+            'q': description,
+            'cx': SEARCH_ENGINE_ID,
+            'key': GOOGLE_API_KEY,
+            'searchType': 'image',
+            'num': 3  # Number of images to return
         }
-        search_response = requests.get(DUCKDUCKGO_IMAGE_API_URL, headers=headers, params=params)
-        search_response.raise_for_status()
-
-        # Parse the JSON response and extract the first direct image URL
-        search_results = search_response.json()
-        if search_results.get("results"):
-            image_url = search_results["results"][0]["image"]
-            logging.info(f"Found direct image URL: {image_url}")
-            return image_url
-        else:
-            logging.error("No image found.")
+        
+        # Make the API request
+        response = requests.get(search_url, params=params)
+        response.raise_for_status()  # Raise exception for bad status codes
+        
+        # Parse JSON response
+        search_results = response.json()
+        if 'items' not in search_results:
+            logging.error(f"No image found for: {description}")
             return None
-    except Exception as e:
-        logging.error(f"Error fetching image from DuckDuckGo: {e}")
+
+        # Check each image URL
+        for item in search_results['items']:
+            image_url = item['link']
+            if is_valid_image_url(image_url):
+                logging.info(f"Found valid image URL: {image_url}")
+                return image_url
+        
+        # If no valid image is found, return None
+        logging.error("No valid image found using Google Custom Search.")
         return None
+    except Exception as e:
+        logging.error(f"Error fetching image from Google Custom Search: {e}")
+        return None
+
 
 def download_image(image_url):
     """

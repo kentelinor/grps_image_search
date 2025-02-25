@@ -1,0 +1,6 @@
+grpcio
+grpcio-tools
+pillow
+requests
+wikipedia-api==0.5.4
+
