@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  server:
+    build:
+      context: .                    # Project root
+      dockerfile: server/Dockerfile  # Path to server Dockerfile
+    ports:
+      - "50051:50051"
+    depends_on:
+      - redis
+    networks:
+      - grpc-network
+
+  client:
+    build:
+      context: .                    # Project root
+      dockerfile: client/Dockerfile  # Path to client Dockerfile
+    depends_on:
+      - server
+    stdin_open: true                # Keep stdin open for interactive input
+    tty: true                       # Allocate a pseudo-TTY
+    networks:
+      - grpc-network
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    networks:
+      - grpc-network
+    
+  proxy:
+    build:
+      context: .                    # Project root
+      dockerfile: proxy/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - server
+    networks:
+      - grpc-network
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    networks:
+      - grpc-network
+
+networks:
+  grpc-network:
+    driver: bridge
+
+

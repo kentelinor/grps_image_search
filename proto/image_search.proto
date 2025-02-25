@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package imagesearch;
+// package imagesearch;   <--- Remove or comment this out
 
 // Define the request message
 message ImageRequest {

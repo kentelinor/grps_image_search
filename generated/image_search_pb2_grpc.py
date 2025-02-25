@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import image_search_pb2 as image__search__pb2
+from . import image_search_pb2 as image__search__pb2
 
 GRPC_GENERATED_VERSION = '1.70.0'
 GRPC_VERSION = grpc.__version__
@@ -36,7 +36,7 @@ class ImageSearchStub(object):
             channel: A grpc.Channel.
         """
         self.SearchImage = channel.unary_unary(
-                '/imagesearch.ImageSearch/SearchImage',
+                '/ImageSearch/SearchImage',
                 request_serializer=image__search__pb2.ImageRequest.SerializeToString,
                 response_deserializer=image__search__pb2.ImageResponse.FromString,
                 _registered_method=True)
@@ -62,9 +62,9 @@ def add_ImageSearchServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'imagesearch.ImageSearch', rpc_method_handlers)
+            'ImageSearch', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('imagesearch.ImageSearch', rpc_method_handlers)
+    server.add_registered_method_handlers('ImageSearch', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -86,7 +86,7 @@ class ImageSearch(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/imagesearch.ImageSearch/SearchImage',
+            '/ImageSearch/SearchImage',
             image__search__pb2.ImageRequest.SerializeToString,
             image__search__pb2.ImageResponse.FromString,
             options,
