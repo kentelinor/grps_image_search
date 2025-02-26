@@ -12,19 +12,12 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s'
 )
 
-# Ensure the project root is on the Python path.
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, project_root)
-
-# Add the 'generated' folder to sys.path so that top-level imports work.
-generated_path = os.path.join(project_root, 'generated')
-sys.path.insert(0, generated_path)
-
 # Import the generated gRPC modules and image fetching logic
-from generated import image_search_pb2, image_search_pb2_grpc
-from image_fetcher import fetch_image_url, download_image
+from generated.image_search_pb2 import ImageRequest, ImageResponse  # Import the request and response classes
+from generated.image_search_pb2_grpc import ImageSearchServicer, add_ImageSearchServicer_to_server  # Import gRPC servicer
+from server.image_fetcher import fetch_image_url, download_image
 
-class ImageSearchService(image_search_pb2_grpc.ImageSearchServicer):
+class ImageSearchService(ImageSearchServicer):
     """
     Implements the ImageSearch gRPC service.
     Receives a query, retrieves an image URL using fetch_image_url,
@@ -38,17 +31,17 @@ class ImageSearchService(image_search_pb2_grpc.ImageSearchServicer):
         if not image_url:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details("No image found for the given description.")
-            return image_search_pb2.ImageResponse()
+            return ImageResponse()
 
         # Download the image data.
         image_data = download_image(image_url)
         if not image_data:
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details("Failed to download the image.")
-            return image_search_pb2.ImageResponse()
+            return ImageResponse()
         
         # Return the image data in the response.
-        return image_search_pb2.ImageResponse(image_data=image_data)
+        return ImageResponse(image_data=image_data)
 
 def serve():
     """
@@ -58,7 +51,7 @@ def serve():
     # Use environment variable for port configuration.
     port = os.getenv("GRPC_PORT", "50051")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    image_search_pb2_grpc.add_ImageSearchServicer_to_server(ImageSearchService(), server)
+    add_ImageSearchServicer_to_server(ImageSearchService(), server)
     
     server_address = f"0.0.0.0:{port}"
 

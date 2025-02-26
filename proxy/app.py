@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import grpc
-from generated import image_search_pb2, image_search_pb2_grpc
+from generated.image_search_pb2 import ImageRequest, ImageResponse  # Correct imports for request and response types
+from generated.image_search_pb2_grpc import ImageSearchStub  # Correct import for the ImageSearchStub
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -14,8 +16,8 @@ def search_image():
 
     # gRPC connection to the server
     channel = grpc.insecure_channel('server:50051')
-    stub = image_search_pb2_grpc.ImageSearchStub(channel)
-    grpc_request = image_search_pb2.ImageRequest(description=description)
+    stub = ImageSearchStub(channel)
+    grpc_request = ImageRequest(description=description)
 
     try:
         grpc_response = stub.SearchImage(grpc_request)

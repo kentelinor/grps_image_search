@@ -4,7 +4,9 @@ import logging
 import io
 import time
 from PIL import Image
-from generated import image_search_pb2, image_search_pb2_grpc
+from generated.image_search_pb2 import ImageRequest, ImageResponse  # Correct imports for request and response types
+from generated.image_search_pb2_grpc import ImageSearchStub  # Correct import for the ImageSearchStub
+
 
 def run():
     """
@@ -31,7 +33,7 @@ def run():
             # Create a gRPC channel and stub.
             channel = grpc.insecure_channel(server_address)
             grpc.channel_ready_future(channel).result(timeout=10)
-            stub = image_search_pb2_grpc.ImageSearchStub(channel)
+            stub = ImageSearchStub(channel)
             logging.info(f"Connected to gRPC server at {server_address}")
             break  # Exit the loop if connection is successful
         except grpc.RpcError as rpc_error:
@@ -49,7 +51,7 @@ def run():
         return
     
     # Create the gRPC request.
-    request = image_search_pb2.ImageRequest(description=query)
+    request = ImageRequest(description=query)
     
     try:
         # Call the SearchImage RPC.

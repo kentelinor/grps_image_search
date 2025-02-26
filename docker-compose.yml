@@ -28,8 +28,10 @@ services:
     
   proxy:
     build:
-      context: .                    # Project root
+      context: .  # Project root
       dockerfile: proxy/Dockerfile
+    environment:
+      - PYTHONPATH=/app:/app/generated:/app/client:/app/server  # Add /app/generated to PYTHONPATH
     ports:
       - "8080:8080"
     depends_on:
