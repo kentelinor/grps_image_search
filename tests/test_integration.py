@@ -8,7 +8,7 @@ class TestImageSearchIntegration(unittest.TestCase):
 
     def test_search_image_integration(self):
         # Test code for the 'SearchImage' method using the real server
-        with grpc.insecure_channel('localhost:50051') as channel:
+        with grpc.insecure_channel('server:50051') as channel:
             stub = ImageSearchStub(channel)
             request = ImageRequest(description="small white dog")
             response = stub.SearchImage(request)
