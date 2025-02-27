@@ -1,18 +1,14 @@
 syntax = "proto3";
 
-// package imagesearch;   <--- Remove or comment this out
-
-// Define the request message
 message ImageRequest {
   string description = 1;  // User-provided text (e.g., "small white dog")
 }
 
-// Define the response message
 message ImageResponse {
   bytes image_data = 1;  // Binary data of the image
+  string image_url = 2;   // Add this line for the image URL
 }
 
-// Define the gRPC service
 service ImageSearch {
   rpc SearchImage (ImageRequest) returns (ImageResponse);
 }
