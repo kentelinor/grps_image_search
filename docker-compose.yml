@@ -2,9 +2,7 @@ version: '3.9'
 
 services:
   server:
-    build:
-      context: .                    # Project root
-      dockerfile: server/Dockerfile  # Path to server Dockerfile
+    image: kentelinor/image-search-server:latest  # Pull from Docker Hub
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - SEARCH_ENGINE_ID=${SEARCH_ENGINE_ID}
@@ -12,17 +10,9 @@ services:
       - "50051:50051"
     networks:
       - grpc-network
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr", "localhost:50051"]
-      interval: 30s
-      retries: 3
-      start_period: 10s
-      timeout: 10s
 
   client:
-    build:
-      context: .                    # Project root
-      dockerfile: client/Dockerfile  # Path to client Dockerfile
+    image: kentelinor/image-search-client:latest  # Pull from Docker Hub
     depends_on:
       - server
     stdin_open: true                # Keep stdin open for interactive input
@@ -31,9 +21,7 @@ services:
       - grpc-network
 
   proxy:
-    build:
-      context: .  # Project root
-      dockerfile: proxy/Dockerfile
+    image: kentelinor/image-search-proxy:latest  # Pull from Docker Hub
     environment:
       - PYTHONPATH=/app:/app/generated:/app/client:/app/server  # Add /app/generated to PYTHONPATH
     ports:
@@ -44,17 +32,14 @@ services:
       - grpc-network
 
   frontend:
-    build:
-      context: ./frontend
+    image: kentelinor/image-search-frontend:latest  # Pull from Docker Hub
     ports:
       - "3000:80"
     networks:
       - grpc-network
 
   tests:
-    build:
-      context: . 
-      dockerfile: tests/Dockerfile
+    image: kentelinor/image-search-tests:latest  # Pull from Docker Hub
     depends_on:
       - server  # Ensure the server is up before running tests
     networks:
@@ -62,7 +47,6 @@ services:
     environment:
       - ENV_FILE=.env
     entrypoint: ["python", "-m", "unittest", "discover", "-s", "tests"]
-    # or use entrypoint: ["pytest", "tests/"] if using pytest
 
 networks:
   grpc-network:
